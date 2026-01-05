@@ -2,14 +2,27 @@
 	<div class="rec-form">
 		<h3 class="form-title">取件码</h3>
 		<div class="input-group">
-			<textarea v-model="pickupCode" placeholder="请输入5位取件码..." class="text-input" rows="1"
-				@keyup.enter="handlePickup" @input="handleInput" :maxlength="5" />
+			<textarea 
+				v-model="pickupCode" 
+				placeholder="请输入6位取件码..." 
+				class="text-input" 
+				rows="1"
+				@keyup.enter="handlePickup" 
+				@input="handleInput" 
+				:maxlength="6"
+				:disabled="isLoading"
+			/>
 			<div class="char-count" :class="{ 'max-reached': isMaxLength }">
-				{{ pickupCode.length }}/5
+				{{ pickupCode.length }}/6
 			</div>
 		</div>
-		<button class="rec-btn" @click="handlePickup" :disabled="!isValidPickupCode">
-			取件
+		<button 
+			class="rec-btn" 
+			@click="handlePickup" 
+			:disabled="!isValidPickupCode || isLoading"
+		>
+			<template v-if="isLoading">取件中...</template>
+			<template v-else>取件</template>
 		</button>
 	</div>
 	<!-- 分隔线 -->
@@ -25,83 +38,131 @@
 			<button class="record-btn" @click="$emit('show-records')">取件记录</button>
 		</div>
 	</div>
+
+	<!-- 错误提示弹窗 -->
+	<div v-if="showError" class="error-toast">
+		{{ errorMessage }}
+	</div>
 </template>
 
 <script setup>
-	import { ref,computed } from 'vue'
-	import { useRouter } from 'vue-router'
-	import { usePickupRecords } from '@/composables/usePickupRecords'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
 
-	const {
-		addPickupRecord
-	} = usePickupRecords()
-	const emit = defineEmits(['show-records', 'pickup-success'])
-	
-	// 页面跳转
-	const router = useRouter()
-	
-	const goToSend = () => {
-	  router.push('/send')
+const emit = defineEmits(['show-records', 'pickup-success', 'submit'])
+
+// 页面路由跳转
+const router = useRouter()
+const goToSend = () => {
+  router.push('/sendPackage')
+}
+
+// 取件码状态管理
+const pickupCode = ref('')
+const isLoading = ref(false)  // 加载状态
+const showError = ref(false)  // 错误提示显示状态
+const errorMessage = ref('')  // 错误提示信息
+
+// 计算属性：检查是否为有效的6位数字取件码
+const isValidPickupCode = computed(() => {
+	return pickupCode.value.length === 6 && /^\d+$/.test(pickupCode.value)
+})
+
+// 计算属性：是否达到最大长度
+const isMaxLength = computed(() => {
+	return pickupCode.value.length === 6
+})
+
+// 输入处理：只允许数字且限制长度
+const handleInput = (event) => {
+	// 只允许输入数字
+	let value = event.target.value.replace(/\D/g, '')
+
+	// 限制为6位数字（修正注释错误）
+	if (value.length > 6) {
+		value = value.slice(0, 6)
 	}
 
-	const pickupCode = ref('')
+	pickupCode.value = value
+}
 
-	// 计算属性：检查是否为有效的5位数字取件码
-	const isValidPickupCode = computed(() => {
-		return pickupCode.value.length === 5 && /^\d+$/.test(pickupCode.value)
-	})
+// 隐藏错误提示
+const hideError = () => {
+	showError.value = false
+	errorMessage.value = ''
+}
 
-	// 计算属性：是否达到最大长度
-	const isMaxLength = computed(() => {
-		return pickupCode.value.length === 5
-	})
-
-	const handleInput = (event) => {
-		// 只允许输入数字
-		let value = event.target.value.replace(/\D/g, '')
-
-		// 限制为5位数字
-		if (value.length > 5) {
-			value = value.slice(0, 5)
-		}
-
-		pickupCode.value = value
+// 处理取件逻辑
+const handlePickup = async () => {
+	// 基础校验
+	if (!isValidPickupCode.value) {
+		alert('请输入6位数字取件码')
+		return
 	}
 
-	const handlePickup = () => {
-		if (!isValidPickupCode.value) {
-			alert('请输入5位数字取件码')
-			return
-		}
-
-		try {
-			// 模拟API调用验证取件码
-			console.log('验证取件码:', pickupCode.value)
-
-			// 这里调用实际的后端接口
-			// const response = await api.validatePickupCode(pickupCode.value)
-
-			// 模拟成功响应
-			const fileName = `文件_${pickupCode.value}.txt` // 实际应该从接口返回
-
-			// 添加到取件记录
-			addPickupRecord(fileName)
-
-			// 通知父组件取件成功
-			emit('pickup-success', fileName)
-
-			alert(`取件成功: ${fileName}`)
-
+	// 清空之前的错误提示
+	hideError()
+	
+	try {
+		// 开始加载
+		isLoading.value = true
+		
+		// 调用后端接口（GET请求，传递取件码参数）
+		const response = await axios.get('/api/v1/receivePackage', {
+			params: {
+				pickupCode: pickupCode.value  // 匹配后端接收的查询参数名
+			},
+			timeout: 10000  // 10秒超时设置
+		})
+		console.log(response.data)
+		// 接口调用成功
+		if (response.data && response.data.fileDownloadUrl) {
 			// 清空输入框
 			pickupCode.value = ''
-
-		} catch (error) {
-			alert('取件码无效或文件已过期')
+			// 通知父组件取件成功，传递文件信息
+			emit('pickup-success', response.data)
+		} else {
+			throw new Error('获取文件信息失败')
 		}
+
+	} catch (error) {
+		// 错误处理
+		if (error.response) {
+			// 后端返回错误状态码
+			switch (error.response.status) {
+				case 400:
+					errorMessage.value = '请输入正确的取件码'
+					break
+				case 404:
+					errorMessage.value = '取件码已过期或不存在'
+					break
+				case 500:
+					errorMessage.value = '服务器繁忙，请稍后再试'
+					break
+				default:
+					errorMessage.value = '取件失败，请重试'
+			}
+		} else if (error.request) {
+			// 网络错误
+			errorMessage.value = '网络连接失败，请检查网络'
+		} else {
+			// 其他错误
+			errorMessage.value = error.message || '取件失败，请重试'
+		}
+		// 显示错误提示
+		showError.value = true
+		// 3秒后自动隐藏错误提示
+		setTimeout(hideError, 3000)
+	} finally {
+		// 结束加载
+		isLoading.value = false
 	}
+}
 </script>
 
 <style scoped>
+	/* 原有样式保持不变 */
 	.rec-form {
 		max-width: 500px;
 		margin: 0 auto;
@@ -134,12 +195,9 @@
 		transition: all 0.3s;
 		box-sizing: border-box;
 		font-family: 'Courier New', monospace;
-		/* 等宽字体，数字显示更整齐 */
 		font-size: 16px;
 		letter-spacing: 2px;
-		/* 数字间距，更易读 */
 		text-align: center;
-		/* 居中显示 */
 	}
 
 	.text-input:focus {
@@ -151,11 +209,9 @@
 	.text-input::placeholder {
 		color: #999;
 		letter-spacing: normal;
-		/* placeholder 不需要字母间距 */
 		text-align: center;
 	}
 
-	/* 字符计数样式 */
 	.char-count {
 		position: absolute;
 		right: 12px;
@@ -211,7 +267,6 @@
 		box-shadow: none;
 	}
 
-	/* 当按钮可用时的特殊样式 */
 	.rec-btn:not(:disabled) {
 		background-color: #52c41a;
 		border-color: #52c41a;
@@ -270,6 +325,21 @@
 		color: #5500ff;
 	}
 
+	/* 新增错误提示样式 */
+	.error-toast {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background: rgba(0, 0, 0, 0.7);
+		color: white;
+		padding: 12px 20px;
+		border-radius: 8px;
+		font-size: 14px;
+		z-index: 1000;
+		animation: fadeInOut 3s ease-in-out;
+	}
+
 	/* 响应式设计 */
 	@media (max-width: 768px) {
 		.rec-form {
@@ -298,5 +368,13 @@
 			align-self: flex-end;
 			margin-top: 8px;
 		}
+	}
+
+	/* 动画效果 */
+	@keyframes fadeInOut {
+		0% { opacity: 0; }
+		20% { opacity: 1; }
+		80% { opacity: 1; }
+		100% { opacity: 0; }
 	}
 </style>

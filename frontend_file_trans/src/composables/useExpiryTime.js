@@ -25,7 +25,7 @@ export function useExpiryTime(initialDays = 1, initialUnit = '天') {
 			case '天':
 				return days * 24 * 60 * 60 * 1000
 			default:
-				return days * 24 * 60 * 60 * 1000
+				return days
 		}
 	})
 

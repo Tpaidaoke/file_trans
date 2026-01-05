@@ -1,0 +1,35 @@
+# air.toml
+root = "."
+tmp_dir = "tmp"  # 临时编译文件存放目录
+
+[build]
+  args_bin = []
+  bin = "./tmp/main"  # 编译后可执行文件路径
+  cmd = "go build -o ./tmp/main ./main.go"  # 编译命令
+  delay = 1000  # 检测到变化后延迟重启时间（毫秒）
+  exclude_dir = ["tmp", "vendor", ".idea", "test"]  # 忽略监听的目录
+  exclude_file = []
+  exclude_regex = ["_test.go"]  # 忽略测试文件
+  exclude_unchanged = false
+  follow_symlink = false
+  full_bin = ""
+  include_dir = ["."]  # 需要监听的目录（项目根目录下所有文件）
+  include_ext = ["go", "yaml", "toml"]  # 监听的文件后缀
+  kill_delay = "0s"
+  log = "build-errors.log"
+  send_interrupt = false
+  stop_on_error = true
+
+[color]
+  build = "yellow"
+  main = "green"
+  runner = "blue"
+  watcher = "magenta"
+
+[log]
+  time = true  # 日志显示时间
+
+[watcher]
+  delay = 300  # 文件变化检测延迟（毫秒）
+  ignore = [".*", "tmp/*", "vendor/*"]  # 忽略的文件/目录
+  poll = true  # 使用轮询模式（使用系统通知）
