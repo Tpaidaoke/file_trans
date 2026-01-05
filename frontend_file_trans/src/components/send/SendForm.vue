@@ -15,7 +15,7 @@
 		<div class="subsection">
 			<!-- 发送文件区域 -->
 			<div v-if="activeTab === 'file'">
-				<FileUpload @file-uploaded="handleFileUploaded" />
+				<FileUpload ref="fileUploadRef" @file-uploaded="handleFileUploaded" />
 			</div>
 
 			<!-- 发送文本区域 -->
@@ -39,9 +39,19 @@
 				</div>
 			</div>
 
-			<!-- 提交按钮 -->
+			<!-- 提交按钮：添加加载状态和禁用 -->
 			<div class="action-buttons">
-				<button class="btn-primary" @click="handleSubmit">安全发送</button>
+				<button 
+					class="btn-primary" 
+					@click="handleSubmit"
+					:disabled="isSubmitting"
+				>
+					<!-- 加载动画：isSubmitting时显示 -->
+					<span class="spinner" v-if="isSubmitting"></span>
+					<!-- 按钮文字：根据状态切换 -->
+					<span v-if="!isSubmitting">安全发送</span>
+					<span v-if="isSubmitting">发送中...</span>
+				</button>
 			</div>
 		</div>
 
@@ -59,68 +69,93 @@
 <script setup>
 	import { ref } from 'vue'
 	import { useRouter } from 'vue-router'
-	
 	import FileUpload from '@/components/common/FileUpload.vue'
-	import ExpirySetting from './ExpirySetting.vue'
-	import {
-		useSendRecords
-	} from '@/composables/useSendRecords'
+	import ExpirySetting from '@/components/send/ExpirySetting.vue'
+	import { formatFileSize } from '@/utils/fileUtils'
 
 	const emit = defineEmits(['show-records', 'submit'])
+	// 获取FileUpload组件的ref
+	const fileUploadRef = ref(null)
 
 	// 当前激活的标签页
 	const activeTab = ref('file')
-
 	// 文本内容
 	const textContent = ref('')
-
 	// 过期设置
 	const expiryDays = ref(1)
 	const timeUnit = ref('天')
+	// 存储上传的文件信息
+	const uploadedFiles = ref([])
+	// 提交加载状态
+	const isSubmitting = ref(false)
 
-	const {
-		addRecord
-	} = useSendRecords()
-
-	const handleFileUploaded = (fileName) => {
-		console.log('文件上传完成:', fileName)
+	// 接收完整的文件信息
+	const handleFileUploaded = (fileInfo) => {
+		console.log('文件上传完成:', fileInfo)
+		// 检查是否已存在相同文件
+		const exists = uploadedFiles.value.some(f => f.name === fileInfo.name && f.size === fileInfo.size)
+		if (!exists) {
+			uploadedFiles.value.push(fileInfo)
+		}
 	}
-	
+
 	// 页面跳转
 	const router = useRouter()
-	
 	const goToReceive = () => {
-	  router.push('/receive')
+		router.push('/receivePackage')
 	}
 
 	const handleSubmit = () => {
 		if (activeTab.value === 'file') {
 			// 文件发送验证逻辑
-			// 这里可以添加文件发送前的验证
-			console.log('发送文件')
+			if (uploadedFiles.value.length === 0) {
+				alert('请先上传文件')
+				return
+			}
 		} else if (activeTab.value === 'text' && !textContent.value.trim()) {
 			alert('请输入要发送的文本内容')
 			return
-		} else {
-			// 发送文本时添加到记录
-			addRecord('文本内容: ' + textContent.value.substring(0, 20) + (textContent.value.length > 20 ? '...' : ''))
 		}
+
+		// 设置加载状态为true
+		isSubmitting.value = true
 
 		// 提交数据
 		const submitData = {
 			type: activeTab.value,
-			text: textContent.value,
+			text: activeTab.value === 'text' ? textContent.value : '',
+			files: activeTab.value === 'file' ? uploadedFiles.value : [],
 			expiryDays: expiryDays.value,
 			timeUnit: timeUnit.value
 		}
 
 		emit('submit', submitData)
-
-		// 清空表单
-		if (activeTab.value === 'text') {
-			textContent.value = ''
-		}
 	}
+
+	// 清空表单的方法（供父组件调用）
+	const clearForm = () => {
+		console.log('执行SendForm的clearForm方法')
+		// 采用批量赋值，减少响应式更新的次数
+		Promise.resolve().then(() => {
+			textContent.value = ''
+			uploadedFiles.value = []
+			// 调用FileUpload的清空方法
+			if (fileUploadRef.value && typeof fileUploadRef.value.clearFileList === 'function') {
+				fileUploadRef.value.clearFileList()
+			}
+		});
+	}
+
+	// 重置提交状态（供父组件调用，恢复按钮初始状态）
+	const resetSubmitting = () => {
+		isSubmitting.value = false
+	}
+
+	// 暴露方法，让父组件可以调用
+	defineExpose({
+		clearForm,
+		resetSubmitting // 新增暴露的重置方法
+	})
 </script>
 
 <style scoped>
@@ -243,6 +278,7 @@
 		margin-top: 32px;
 	}
 
+	/* 核心：提交按钮样式修改 */
 	.btn-primary {
 		background: #1890ff;
 		color: white;
@@ -252,10 +288,42 @@
 		font-size: 16px;
 		cursor: pointer;
 		transition: background 0.3s;
+		/* 新增：让按钮内元素居中对齐 */
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px; /* 文字与加载动画的间距 */
 	}
 
+	/* 新增：鼠标悬停改为深色（深蓝光，可替换为其他深色） */
 	.btn-primary:hover {
-		background: #40a9ff;
+		/* 深蓝光（推荐）：#096dd9 */
+		/* 深灰：#2c3e50 */
+		/* 深绿：#0f5132 */
+		background: #096dd9;
+	}
+
+	/* 新增：禁用状态样式（加载中时的按钮样式） */
+	.btn-primary:disabled {
+		background: #8c8c8c;
+		cursor: not-allowed;
+		opacity: 0.8;
+	}
+
+	/* 新增：加载动画样式（纯CSS旋转圆圈） */
+	.spinner {
+		width: 16px;
+		height: 16px;
+		border: 2px solid #fff;
+		border-top: 2px solid transparent;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+
+	/* 旋转动画关键帧 */
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
 	}
 
 	.record-section {

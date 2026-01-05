@@ -1,0 +1,49 @@
+# 应用基础配置
+app:
+  name: file_trans  # 应用名称，用于日志和监控标识
+  env: dev         # 运行环境：dev(开发)、test(测试)、prod(生产)
+
+server:
+  port: 9003                  # 服务监听端口
+  read_timeout: 30s           # HTTP读取超时时间
+  write_timeout: 30s          # HTTP写入超时时间
+  idle_timeout: 60s           # 连接空闲超时时间
+
+db:
+  host: 120.48.53.247
+  port: 13306
+  user: root
+  password: wulan920827
+  dbname: file_trans
+  max_open_conns: 100         # 最大打开连接数
+  max_idle_conns: 20          # 最大空闲连接数
+  conn_max_lifetime: 300s     # 连接最大存活时间
+
+redis:
+  host: 120.48.53.247
+  port: 26739
+  password: jF5te7XDN2KZRf6r
+  db: 0
+  pool_size: 10               # 连接池大小
+  min_idle_conns: 5           # 最小空闲连接数
+  dial_timeout: 5s            # 连接建立超时时间
+
+minio:
+  endpoint: 120.48.53.247:19000  # 云服务器MinIO地址
+  access_key: minio                   # 访问账号
+  secret_key: 3NazDJihhzGSHAaG           # 密钥
+  use_ssl: false                          # 是否使用SSL
+  bucket_name: temporaryfile              # 存储桶名称
+  max_retries: 3                 # 上传/下载最大重试次数
+  timeout: 30s
+
+# 日志配置
+log:
+  level: info                    # 日志级别：debug(调试)、info(信息)、warn(警告)、error(错误)
+  output: console               # 输出方式：console(控制台)、file(文件)、both(两者都输出)
+  file:
+    path: "./logs/"                # 日志文件存储路径
+    max_size: 10                 # 单个文件最大大小（单位：MB）
+    max_backup: 30               # 最大备份文件数
+    max_age: 7                   # 日志文件保留天数（单位：天）
+    compress: false              # 是否压缩备份文件

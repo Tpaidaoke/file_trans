@@ -9,15 +9,15 @@ import ReceivePage from '@/views/ReceivePage.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/send'
+    redirect: '/sendPackage'
   },
   {
-    path: '/send',
+    path: '/sendPackage',
     name: 'Send',
     component: SendPage
   },
   {
-    path: '/receive', 
+    path: '/receivePackage', 
     name: 'Receive',
     component: ReceivePage
   }

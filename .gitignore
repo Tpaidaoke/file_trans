@@ -1,81 +1,81 @@
 # ==================== 前端 Vue 专属忽略 ====================
 # 依赖包（体积大，无需上传，npm install 可重新安装）
-frontend/node_modules/
+frontend_file_trans/node_modules/
 # 打包构建产物（部署时用，源码仓库无需存储）
-frontend/dist/
-frontend/build/
-frontend/.output/  # Vue3 + Vite 项目的打包目录
+frontend_file_trans/dist/
+frontend_file_trans/build/
+frontend_file_trans/.output/  # Vue3 + Vite 项目的打包目录
 # 环境变量文件（含敏感信息：如接口地址、密钥、token 等）
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.production.local
-frontend/.env.test.local
+frontend_file_trans/.env
+frontend_file_trans/.env.local
+frontend_file_trans/.env.development.local
+frontend_file_trans/.env.production.local
+frontend_file_trans/.env.test.local
 # IDE 配置文件（个人开发环境，无需共享）
-frontend/.idea/
-frontend/.vscode/
-frontend/.project
-frontend/.classpath
+frontend_file_trans/.idea/
+frontend_file_trans/.vscode/
+frontend_file_trans/.project
+frontend_file_trans/.classpath
 # 缓存与日志文件
-frontend/.npm/
-frontend/.pnpm-store/
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-frontend/pnpm-debug.log*
+frontend_file_trans/.npm/
+frontend_file_trans/.pnpm-store/
+frontend_file_trans/npm-debug.log*
+frontend_file_trans/yarn-debug.log*
+frontend_file_trans/yarn-error.log*
+frontend_file_trans/pnpm-debug.log*
 # 编辑器缓存
-frontend/*.suo
-frontend/*.ntvs*
-frontend/*.njsproj
-frontend/*.sln
-frontend/*.sw?
+frontend_file_trans/*.suo
+frontend_file_trans/*.ntvs*
+frontend_file_trans/*.njsproj
+frontend_file_trans/*.sln
+frontend_file_trans/*.sw?
 # Vue CLI 临时文件
-frontend/.eslintcache
-frontend/node_modules/.cache/
+frontend_file_trans/.eslintcache
+frontend_file_trans/node_modules/.cache/
 # 单元测试/端到端测试产物
-frontend/coverage/
-frontend/test-results/
+frontend_file_trans/coverage/
+frontend_file_trans/test-results/
 # 其他临时文件
-frontend/*.log
-frontend/*.tmp
-frontend/*.bak
+frontend_file_trans/*.log
+frontend_file_trans/*.tmp
+frontend_file_trans/*.bak
 
 # ==================== 后端 Go 专属忽略 ====================
 # 编译产物（Go 编译后的二进制可执行文件，跨平台不同，无需上传）
-backend/*_linux
-backend/*_windows.exe
-backend/*_darwin
-backend/[你的项目名]  # 替换为你的 Go 项目二进制文件名（如 backend/file_trans）
-backend/[你的项目名].exe
+backend_file_trans/*_linux
+backend_file_trans/*_windows.exe
+backend_file_trans/*_darwin
 # 依赖缓存（Go mod 管理时，vendor 目录可忽略，go.mod/go.sum 已记录依赖）
-backend/vendor/
+backend_file_trans/vendor/
 # 环境变量与配置文件（含敏感信息：数据库账号、密钥、端口等）
-backend/.env
-backend/.env.*
-backend/config.yaml
-backend/config.json
-backend/config.ini
+backend_file_trans/.env
+backend_file_trans/.env.*
+backend_file_trans/config.yaml
+backend_file_trans/config.json
+backend_file_trans/config.ini
 # IDE 配置文件（Goland/VS Code 等，个人环境）
-backend/.idea/
-backend/.vscode/
-backend/*.iml
-backend/*.ipr
-backend/*.iws
+backend_file_trans/.idea/
+backend_file_trans/.vscode/
+backend_file_trans/*.iml
+backend_file_trans/*.ipr
+backend_file_trans/*.iws
 # 日志文件（运行时生成，无需上传）
-backend/logs/
-backend/*.log
+backend_file_trans/logs/
+backend_file_trans/*.log
 # 调试与临时文件
-backend/*.debug
-backend/*.tmp
-backend/*.bak
-backend/.DS_Store
+backend_file_trans/*.toml
+backend_file_trans/*.debug
+backend_file_trans/tmp
+backend_file_trans/test
+backend_file_trans/*.bak
+backend_file_trans/.DS_Store
 # Go 模块缓存（本地缓存，无需上传）
-backend/go.sum.bak
-backend/.go/pkg/
+backend_file_trans/go.sum.bak
+backend_file_trans/.go/pkg/
 # 其他编译残留
-backend/*.o
-backend/*.a
-backend/*.so
+backend_file_trans/*.o
+backend_file_trans/*.a
+backend_file_trans/*.so
 
 # ==================== 通用忽略（全项目适用） ====================
 # 系统文件
